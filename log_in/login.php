@@ -13,6 +13,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if ($user && password_verify($password, $user['password'])) {
         $_SESSION['user'] = $user;
 
+        // تعيين كوكي تحتوي على "User ID" صالحة لمدة 7 أيام
+        setcookie("user_id", $user['id'], time() + (7 * 24 * 60 * 60), "/");
+
         if ($user['role'] === 'admin') {
             $_SESSION['is_admin'] = true;
         }
@@ -24,6 +27,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">

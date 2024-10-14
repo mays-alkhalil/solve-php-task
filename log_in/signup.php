@@ -3,44 +3,87 @@ session_start();
 include('db_connection.php');
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // جمع البيانات من النموذج مع التحقق من وجودها
-    $email = isset($_POST['email']) ? $_POST['email'] : '';
-    $mobile = isset($_POST['mobile']) ? $_POST['mobile'] : '';
-    $fname = isset($_POST['fname']) ? $_POST['fname'] : '';
-    $mname = isset($_POST['mname']) ? $_POST['mname'] : '';
-    $lname = isset($_POST['lname']) ? $_POST['lname'] : '';
-    $family_name = isset($_POST['family_name']) ? $_POST['family_name'] : '';
+    $email = $_POST['email'] ?? '';
+    $mobile = $_POST['mobile'] ?? '';
+    $fname = $_POST['fname'] ?? '';
+    $mname = $_POST['mname'] ?? '';
+    $lname = $_POST['lname'] ?? '';
+    $family_name = $_POST['family_name'] ?? '';
     $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
-    $dob = isset($_POST['dob']) ? $_POST['dob'] : '';
-    $role = isset($_POST['role']) ? $_POST['role'] : 'user'; 
+    $role = $_POST['role'] ?? 'user';
 
-    try {
-        // إعداد الاستعلام
-        $sql = "INSERT INTO users (fname, mname, lname, family_name, email, mobile, password, role) 
-                VALUES (:fname, :mname, :lname, :family_name, :email, :mobile, :password, :role)";
-        $stmt = $pdo->prepare($sql);
-        
-        // تنفيذ الاستعلام
-        $stmt->execute([
-            ':fname' => $fname,
-            ':mname' => $mname,
-            ':lname' => $lname,
-            ':family_name' => $family_name,
-            ':email' => $email,
-            ':mobile' => $mobile,
-            ':password' => $password,
-            ':role' => $role
-        ]);
+    // معالجة الصورة
+    if (isset($_FILES['profile_pic']) && $_FILES['profile_pic']['error'] == 0) {
+        $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif'];
+        $profile_pic = $_FILES['profile_pic'];
+        $file_name = $profile_pic['name'];
+        $file_tmp = $profile_pic['tmp_name'];
+        $file_ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
 
-        // توجيه المستخدم إلى صفحة الترحيب بعد التسجيل الناجح
-        header("Location: welcome.php");
-        exit(); // تأكد من إنهاء السكربت بعد إعادة التوجيه
-    } catch (PDOException $e) {
-        echo "Error: " . $e->getMessage();
+        if (in_array($file_ext, $allowed_extensions)) {
+            // تحديد مسار لحفظ الصورة
+            $profile_pic_path = 'uploads/' . uniqid() . '.' . $file_ext;
+
+            // رفع الصورة إلى المجلد
+            if (move_uploaded_file($file_tmp, $profile_pic_path)) {
+                // معالجة السيرة الذاتية
+                if (isset($_FILES['cv']) && $_FILES['cv']['error'] == 0) {
+                    $cv = $_FILES['cv'];
+                    $cv_name = $cv['name'];
+                    $cv_tmp = $cv['tmp_name'];
+                    $cv_ext = strtolower(pathinfo($cv_name, PATHINFO_EXTENSION));
+
+                    // التحقق من أن الملف بصيغة PDF
+                    if ($cv_ext === 'pdf') {
+                        // تحديد مسار لحفظ السيرة الذاتية
+                        $cv_path = 'uploads/' . uniqid() . '.pdf';
+
+                        // رفع السيرة الذاتية إلى المجلد
+                        if (move_uploaded_file($cv_tmp, $cv_path)) {
+                            try {
+                                // إدخال البيانات إلى قاعدة البيانات مع مسار الصورة والسيرة الذاتية
+                                $sql = "INSERT INTO users (fname, mname, lname, family_name, email, mobile, password, role, profile_pic, cv) 
+                                        VALUES (:fname, :mname, :lname, :family_name, :email, :mobile, :password, :role, :profile_pic, :cv)";
+                                $stmt = $pdo->prepare($sql);
+                                $stmt->execute([
+                                    ':fname' => $fname,
+                                    ':mname' => $mname,
+                                    ':lname' => $lname,
+                                    ':family_name' => $family_name,
+                                    ':email' => $email,
+                                    ':mobile' => $mobile,
+                                    ':password' => $password,
+                                    ':role' => $role,
+                                    ':profile_pic' => $profile_pic_path,
+                                    ':cv' => $cv_path
+                                ]);
+
+                                // توجيه المستخدم إلى صفحة الترحيب بعد التسجيل الناجح
+                                header("Location: welcome.php");
+                                exit(); 
+                            } catch (PDOException $e) {
+                                echo "Error: " . $e->getMessage();
+                            }
+                        } else {
+                            echo "Failed to upload the CV.";
+                        }
+                    } else {
+                        echo "Please upload a valid PDF file.";
+                    }
+                } else {
+                    echo "Error uploading CV. Please make sure you selected a file.";
+                }
+            } else {
+                echo "Failed to upload the image.";
+            }
+        } else {
+            echo "Please upload a valid image file (jpg, jpeg, png, gif).";
+        }
+    } else {
+        echo "Error uploading file. Please make sure you selected a file.";
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -51,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <body>
     <div class="container">
         <h2>Registration</h2>
-        <form method="POST" action="">
+        <form method="POST" action="" enctype="multipart/form-data">
             <div class="form-group">
                 <label for="email">Email:</label>
                 <input type="email" class="form-control" id="email" name="email" required>
@@ -80,7 +123,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <label for="password">Password:</label>
                 <input type="password" class="form-control" id="password" name="password" required>
             </div>
-            <!-- إضافة حقل اختيار الدور -->
+            <div class="form-group">
+                <label for="profile_pic">Upload Profile Picture:</label>
+                <input type="file" class="form-control" id="profile_pic" name="profile_pic" required>
+            </div>
+            <div class="form-group">
+                <label for="cv">Upload CV (PDF only):</label>
+                <input type="file" class="form-control" id="cv" name="cv" accept=".pdf" required>
+            </div>
             <div class="form-group">
                 <label for="role">Role:</label>
                 <select class="form-control" id="role" name="role">
@@ -91,5 +141,5 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <button type="submit" class="btn btn-primary">Register</button>
         </form>
     </div>
-</body> 
-</html> 
+</body>
+</html>
