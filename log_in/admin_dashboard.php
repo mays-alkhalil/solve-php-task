@@ -7,7 +7,6 @@ if (!isset($_SESSION['is_admin']) || !$_SESSION['is_admin']) {
     exit();
 }
 
-// استعلام لجلب جميع المستخدمين
 $stmt = $pdo->query("SELECT * FROM users");
 $users = $stmt->fetchAll();
 ?>
@@ -35,7 +34,7 @@ $users = $stmt->fetchAll();
                     <th>Name</th>
                     <th>Email</th>
                     <th>Role</th>
-                    <th>Actions</th> <!-- إضافة عمود للأزرار -->
+                    <th>Actions</th> 
                 </tr>
             </thead>
             <tbody>
