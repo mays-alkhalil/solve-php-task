@@ -1,0 +1,260 @@
+CREATE DATABASE university_db;
+
+
+CREATE TABLE students (
+    student_id INT AUTO_INCREMENT PRIMARY KEY,
+    first_name VARCHAR(50
+) NOT NULL,
+   last_name VARCHAR(50
+) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    date_of_birth DATE NOT NULL,
+   gender ENUM('Male', 'Female') NOT NULL,
+   major VARCHAR(50) NOT NULL, 
+     enrollment_year YEAR NOT NULL);
+
+
+
+CREATE TABLE Courses (
+    course_id INT AUTO_INCREMENT PRIMARY KEY,
+    course_name VARCHAR(100) NOT NULL,
+    course_code VARCHAR(10) NOT NULL,
+    credits INT NOT NULL,
+    department VARCHAR(50) NOT NULL
+);
+
+
+
+CREATE TABLE Instructors (
+    instructor_id INT AUTO_INCREMENT PRIMARY KEY,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    hire_date DATE NOT NULL,
+    department VARCHAR(50) NOT NULL
+);
+
+
+
+CREATE TABLE Enrollments (
+    enrollment_id INT AUTO_INCREMENT PRIMARY KEY,
+    student_id INT,
+    course_id INT,
+    grade CHAR(1),
+    FOREIGN KEY (student_id) REFERENCES Students(student_id),
+    FOREIGN KEY (course_id) REFERENCES Courses(course_id)
+);
+
+
+
+
+CREATE TABLE CourseAssignments (
+    assignment_id INT AUTO_INCREMENT PRIMARY KEY,
+    instructor_id INT,
+    course_id INT,
+    semester ENUM('Spring', 'Summer', 'Fall') NOT NULL,
+    year YEAR NOT NULL,
+    FOREIGN KEY (instructor_id) REFERENCES Instructors(instructor_id),
+    FOREIGN KEY (course_id) REFERENCES Courses(course_id)
+);
+
+
+
+
+
+
+INSERT INTO Students (first_name, last_name, email, date_of_birth, gender, major, enrollment_year)
+VALUES 
+('John', 'Doe', 'john.doe@example.com', '2000-05-15', 'Male', 'Computer Science', 2020),
+('Jane', 'Smith', 'jane.smith@example.com', '1999-12-10', 'Female', 'Electrical Engineering', 2019),
+('Alice', 'Johnson', 'alice.johnson@example.com', '2001-03-22', 'Female', 'Mechanical Engineering', 2021),
+('Bob', 'Brown', 'bob.brown@example.com', '2000-07-19', 'Male', 'Mathematics', 2020),
+('Charlie', 'Davis', 'charlie.davis@example.com', '2002-01-02', 'Male', 'Physics', 2021),
+('Emily', 'Clark', 'emily.clark@example.com', '1998-11-30', 'Female', 'Biology', 2018),
+('Frank', 'Miller', 'frank.miller@example.com', '2000-04-17', 'Male', 'Computer Engineering', 2020),
+('Grace', 'Wilson', 'grace.wilson@example.com', '1999-06-05', 'Female', 'Civil Engineering', 2019),
+('Hannah', 'Moore', 'hannah.moore@example.com', '2001-09-12', 'Female', 'Chemistry', 2021),
+('Ian', 'Taylor', 'ian.taylor@example.com', '2000-08-03', 'Male', 'Mathematics', 2020);
+
+
+
+
+
+INSERT INTO Instructors (first_name, last_name, email, hire_date, department)
+VALUES 
+('Sarah', 'Lee', 'sarah.lee@example.com', '2015-08-15', 'Computer Science'),
+('Michael', 'Jones', 'michael.jones@example.com', '2010-03-25', 'Electrical Engineering'),
+('Laura', 'White', 'laura.white@example.com', '2012-09-30', 'Mechanical Engineering'),
+('David', 'Harris', 'david.harris@example.com', '2008-01-20', 'Mathematics'),
+('Emma', 'Martin', 'emma.martin@example.com', '2017-05-12', 'Physics');
+
+
+
+
+
+
+INSERT INTO Courses (course_name, course_code, credits, department)
+VALUES 
+('Introduction to Programming', 'CS101', 3, 'Computer Science'),
+('Circuit Analysis', 'EE201', 4, 'Electrical Engineering'),
+('Thermodynamics', 'ME301', 3, 'Mechanical Engineering'),
+('Linear Algebra', 'MATH202', 3, 'Mathematics'),
+('Quantum Mechanics', 'PHYS401', 4, 'Physics');
+
+
+
+
+
+
+INSERT INTO CourseAssignments (instructor_id, course_id, semester, year)
+VALUES 
+(1, 1, 'Fall', 2024),  
+(2, 2, 'Fall', 2024),  
+(3, 3, 'Fall', 2024), 
+(4, 4, 'Fall', 2024), 
+(5, 5, 'Fall', 2024); 
+
+
+
+
+INSERT INTO Enrollments (student_id, course_id, grade)
+VALUES 
+(1, 1, 'A'), 
+(1, 4, 'B'), 
+(2, 2, 'A'),  
+(2, 3, 'B'),
+(3, 1, 'C'), 
+(3, 5, 'A'), 
+(4, 4, 'B'), 
+(4, 2, 'A'), 
+(5, 5, 'B'), 
+(5, 3, 'C'),  
+(6, 1, 'A'), 
+(6, 2, 'B'), 
+(7, 3, 'A'), 
+(7, 5, 'A'), 
+(8, 1, 'B'),
+(8, 4, 'A'),
+(9, 2, 'A'), 
+(9, 5, 'B'),  
+(10, 4, 'C'), 
+(10, 3, 'B');
+
+
+
+SELECT * FROM Students;
+
+
+
+SELECT COUNT(*) AS total_courses FROM Courses;
+
+
+
+
+SELECT Students.first_name, Students.last_name
+FROM Enrollments
+JOIN Students ON Enrollments.student_id = Students.student_id
+JOIN Courses ON Enrollments.course_id = Courses.course_id
+WHERE Courses.course_code = 'CS101';
+
+
+
+SELECT first_name, last_name, email
+FROM Instructors
+WHERE department = 'Computer Science';
+
+
+
+SELECT Courses.course_name, COUNT(Enrollments.student_id) AS number_of_students
+FROM Courses
+LEFT JOIN Enrollments ON Courses.course_id = Enrollments.course_id
+GROUP BY Courses.course_name;
+
+
+
+SELECT Students.first_name, Students.last_name, Courses.course_name
+FROM Enrollments
+JOIN Students ON Enrollments.student_id = Students.student_id
+JOIN Courses ON Enrollments.course_id = Courses.course_id
+WHERE Enrollments.grade = 'A';
+
+
+SELECT Courses.course_name, Instructors.first_name, Instructors.last_name
+FROM CourseAssignments
+JOIN Courses ON CourseAssignments.course_id = Courses.course_id
+JOIN Instructors ON CourseAssignments.instructor_id = Instructors.instructor_id
+WHERE CourseAssignments.semester = 'Fall' AND CourseAssignments.year = 2024;
+
+
+
+
+
+SELECT AVG(
+    CASE 
+        WHEN grade = 'A' THEN 4.0
+        WHEN grade = 'B' THEN 3.0
+        WHEN grade = 'C' THEN 2.0
+        WHEN grade = 'D' THEN 1.0
+        WHEN grade = 'F' THEN 0.0
+    END) AS average_grade
+FROM Enrollments
+JOIN Courses ON Enrollments.course_id = Courses.course_id
+WHERE Courses.course_code = 'CS101';
+
+
+
+
+SELECT Students.first_name, Students.last_name, COUNT(Enrollments.course_id) AS course_count
+FROM Enrollments
+JOIN Students ON Enrollments.student_id = Students.student_id
+JOIN CourseAssignments ON Enrollments.course_id = CourseAssignments.course_id
+WHERE CourseAssignments.semester = 'Fall' AND CourseAssignments.year = 2024
+GROUP BY Students.student_id
+HAVING course_count > 3;
+
+
+
+
+SELECT Students.first_name, Students.last_name, Courses.course_name, Enrollments.grade
+FROM Enrollments
+JOIN Students ON Enrollments.student_id = Students.student_id
+JOIN Courses ON Enrollments.course_id = Courses.course_id
+WHERE Enrollments.grade IS NULL;
+
+
+
+
+SELECT Students.first_name, Students.last_name, AVG(
+    CASE 
+        WHEN grade = 'A' THEN 4.0
+        WHEN grade = 'B' THEN 3.0
+        WHEN grade = 'C' THEN 2.0
+        WHEN grade = 'D' THEN 1.0
+        WHEN grade = 'F' THEN 0.0
+    END) AS average_grade
+FROM Enrollments
+JOIN Students ON Enrollments.student_id = Students.student_id
+GROUP BY Students.student_id
+ORDER BY average_grade DESC
+LIMIT 1;
+
+
+
+
+
+SELECT Courses.department, COUNT(Courses.course_id) AS course_count
+FROM CourseAssignments
+JOIN Courses ON CourseAssignments.course_id = Courses.course_id
+WHERE CourseAssignments.year = 2024
+GROUP BY Courses.department
+ORDER BY course_count DESC
+LIMIT 1;
+
+
+
+
+SELECT Courses.course_name
+FROM Courses
+LEFT JOIN Enrollments ON Courses.course_id = Enrollments.course_id
+WHERE Enrollments.enrollment_id IS NULL;
+
